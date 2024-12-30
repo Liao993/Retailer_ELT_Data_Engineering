@@ -25,6 +25,19 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "{PGADMIN_PORT}:80"
+    networks:
+      - elt_network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin # Persistent storage for pgAdmin settings
+
   elt_script:
     build:
       context: ./elt_script # Directory containing the Dockerfile and elt_script.py
@@ -39,3 +52,6 @@ services:
 networks:
   elt_network:
     driver: bridge
+
+volumes:
+  pgadmin_data:
