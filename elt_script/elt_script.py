@@ -1,11 +1,14 @@
-import subprocess
-import time
 from dotenv import load_dotenv # type: ignore
 import os
+import time
+import subprocess
+import time
+
 
 # Load environment variables from .env file
 env_path = os.path.join('..', '.env') # Specify the path to the .env file
 load_dotenv(dotenv_path=env_path)
+
 
 
 def wait_for_postgres(host, max_retries=5, delay_seconds=5):
@@ -27,10 +30,9 @@ def wait_for_postgres(host, max_retries=5, delay_seconds=5):
     print("Max retries reached. Exiting.")
     return False
 
-
 # Use the function before running the ELT process
 source_host = os.getenv("SOURCE_HOST")
-if not wait_for_postgres(host="source_postgres"):
+if not wait_for_postgres(host=source_host):
     exit(1)
 
 print("Starting ELT script...")
@@ -49,10 +51,11 @@ destination_config = {
     "user": os.getenv("DESTINATION_USER"),
     "password": os.getenv("DESTINATION_PASSWORD"),
     "host": os.getenv("DESTINATION_HOST"),
+  
 }
 
-# Use pg_dump to dump the source database to a SQL file
-dump_command = [
+# Use pg_dump to extract(dump) the source database to a SQL file
+extract_command = [
     'pg_dump',
     '-h', source_config['host'],
     '-U', source_config['user'],
@@ -65,7 +68,7 @@ dump_command = [
 subprocess_env = dict(PGPASSWORD=source_config['password'])
 
 # Execute the dump command
-subprocess.run(dump_command, env=subprocess_env, check=True)
+subprocess.run(extract_command, env=subprocess_env, check=True)
 
 # Use psql to load the dumped SQL file into the destination database
 load_command = [
