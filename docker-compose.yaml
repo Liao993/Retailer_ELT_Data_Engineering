@@ -1,45 +1,46 @@
-version: "3"
-
 services:
   source_postgres:
-    image: postgres:latest
+    container_name: source_postgres_container
+    image: postgres:15
     ports:
       - "${SOURCE_PORT}:5432"
     networks:
       - elt_network
     environment:
-      POSTGRES_DB: ${SOURCE_DB}
-      POSTGRES_USER: ${SOURCE_USER}
-      POSTGRES_PASSWORD: ${SOURCE_PASSWORD}
+      POSTGRES_DB: "${SOURCE_DB}"
+      POSTGRES_USER: "${SOURCE_USER}"
+      POSTGRES_PASSWORD: "${SOURCE_PASSWORD}"
     volumes:
-      - ./source_db_init/test.sql:/docker-entrypoint-initdb.d/test.sql
+      - ./source_db_init/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   destination_postgres:
-    image: postgres:latest
+    container_name: destination_postgres_container
+    image: postgres:15
     ports:
       - "${DESTINATION_PORT}:5432"
     networks:
       - elt_network
     environment:
-      POSTGRES_DB: ${DESTINATION_DB}
-      POSTGRES_USER: ${DESTINATION_USER}
-      POSTGRES_PASSWORD: ${DESTINATION_PASSWORD}
+      POSTGRES_DB: "${DESTINATION_DB}"
+      POSTGRES_USER: "${DESTINATION_USER}"
+      POSTGRES_PASSWORD: "${DESTINATION_PASSWORD}"
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
     ports:
-      - "{PGADMIN_PORT}:80"
+      - "${PGADMIN_PORT}:80"
     networks:
       - elt_network
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
     depends_on:
       - source_postgres
       - destination_postgres
 
   elt_script:
+    container_name: elt_script_container
     build:
       context: ./elt_script # Directory containing the Dockerfile and elt_script.py
       dockerfile: Dockerfile # Name of the Dockerfile, if it's something other than "Dockerfile", specify here

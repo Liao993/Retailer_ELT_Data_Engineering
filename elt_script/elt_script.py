@@ -1,14 +1,5 @@
-from dotenv import load_dotenv # type: ignore
-import os
-import time
 import subprocess
 import time
-
-
-# Load environment variables from .env file
-env_path = os.path.join('..', '.env') # Specify the path to the .env file
-load_dotenv(dotenv_path=env_path)
-
 
 
 def wait_for_postgres(host, max_retries=5, delay_seconds=5):
@@ -30,32 +21,33 @@ def wait_for_postgres(host, max_retries=5, delay_seconds=5):
     print("Max retries reached. Exiting.")
     return False
 
+
 # Use the function before running the ELT process
-source_host = os.getenv("SOURCE_HOST")
-if not wait_for_postgres(host=source_host):
+if not wait_for_postgres(host="source_postgres"):
     exit(1)
 
 print("Starting ELT script...")
 
 # Configuration for the source PostgreSQL database
 source_config = {
-    "dbname": os.getenv("SOURCE_DB"),
-    "user": os.getenv("SOURCE_USER"),
-    "password": os.getenv("SOURCE_PASSWORD"),
-    "host": os.getenv("SOURCE_HOST"),
+    'dbname': 'source_db',
+    'user': 'postgres',
+    'password': 'secret',
+    # Use the service name from docker-compose as the hostname
+    'host': 'source_postgres'
 }
 
 # Configuration for the destination PostgreSQL database
 destination_config = {
-    "dbname": os.getenv("DESTINATION_DB"),
-    "user": os.getenv("DESTINATION_USER"),
-    "password": os.getenv("DESTINATION_PASSWORD"),
-    "host": os.getenv("DESTINATION_HOST"),
-  
+    'dbname': 'destination_db',
+    'user': 'postgres',
+    'password': 'secret',
+    # Use the service name from docker-compose as the hostname
+    'host': 'destination_postgres'
 }
 
-# Use pg_dump to extract(dump) the source database to a SQL file
-extract_command = [
+# Use pg_dump to dump the source database to a SQL file
+dump_command = [
     'pg_dump',
     '-h', source_config['host'],
     '-U', source_config['user'],
@@ -68,7 +60,7 @@ extract_command = [
 subprocess_env = dict(PGPASSWORD=source_config['password'])
 
 # Execute the dump command
-subprocess.run(extract_command, env=subprocess_env, check=True)
+subprocess.run(dump_command, env=subprocess_env, check=True)
 
 # Use psql to load the dumped SQL file into the destination database
 load_command = [
@@ -85,4 +77,44 @@ subprocess_env = dict(PGPASSWORD=destination_config['password'])
 # Execute the load command
 subprocess.run(load_command, env=subprocess_env, check=True)
 
-print("Ending ELT script. Awesome!!!")
+print("Ending ELT script...")
+
+"""
+# Get the absolute path of the .env file in the root directory
+dotenv_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path)
+
+
+# Load source and destination configuration from environment variables
+source_config = {
+    "dbname": os.getenv("SOURCE_DB"),
+    "user": os.getenv("SOURCE_USER"),
+    "password": os.getenv("SOURCE_PASSWORD"),
+    "host": "source_postgres_container",
+    "port": os.getenv("SOURCE_PORT"),
+}
+
+destination_config = {
+    "dbname": os.getenv("DESTINATION_DB"),
+    "user": os.getenv("DESTINATION_USER"),
+    "password": os.getenv("DESTINATION_PASSWORD"),
+    "host": "destination_postgres_container",
+    "port": os.getenv("DESTINATION_PORT"),
+}
+"""
+
+"""
+# Set the PGPASSWORD environment variable to avoid password prompt
+subprocess_env = os.environ.copy()
+subprocess_env["PGPASSWORD"] = source_config["password"]
+
+# Execute the dump command
+subprocess.run(dump_command, env=subprocess_env, check=True)
+"""
+"""
+# Set the PGPASSWORD environment variable for the destination database
+subprocess_env["PGPASSWORD"] = destination_config["password"]
+
+# Execute the load command
+subprocess.run(load_command, env=subprocess_env, check=True)
+"""
