@@ -1,9 +1,11 @@
+version: "3"
+
 services:
   source_postgres:
     container_name: source_postgres_container
     image: postgres:15
     ports:
-      - "${SOURCE_PORT}:5432"
+      - "5433:5432"
     networks:
       - elt_network
     environment:
@@ -17,7 +19,7 @@ services:
     container_name: destination_postgres_container
     image: postgres:15
     ports:
-      - "${DESTINATION_PORT}:5432"
+      - "5434:5432"
     networks:
       - elt_network
     environment:
@@ -25,28 +27,20 @@ services:
       POSTGRES_USER: "${DESTINATION_USER}"
       POSTGRES_PASSWORD: "${DESTINATION_PASSWORD}"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    ports:
-      - "${PGADMIN_PORT}:80"
-    networks:
-      - elt_network
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}"
-      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
-    depends_on:
-      - source_postgres
-      - destination_postgres
-
   elt_script:
-    container_name: elt_script_container
     build:
       context: ./elt_script # Directory containing the Dockerfile and elt_script.py
       dockerfile: Dockerfile # Name of the Dockerfile, if it's something other than "Dockerfile", specify here
     command: ["python", "elt_script.py"]
     networks:
       - elt_network
+    environment:
+      SOURCE_DB: "${SOURCE_DB}"
+      SOURCE_USER: "${SOURCE_USER}"
+      SOURCE_PASSWORD: "${SOURCE_PASSWORD}"
+      DESTINATION_DB: "${DESTINATION_DB}" # Add this line
+      DESTINATION_USER: "${DESTINATION_USER}" # Add this line
+      DESTINATION_PASSWORD: "${DESTINATION_PASSWORD}" # Add this line
     depends_on:
       - source_postgres
       - destination_postgres
