@@ -27,13 +27,26 @@ services:
       POSTGRES_USER: "${DESTINATION_USER}"
       POSTGRES_PASSWORD: "${DESTINATION_PASSWORD}"
 
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80" # Expose PGAdmin 4 on port 5050 (adjust as needed)
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}" # Set your desired admin email
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}" # Set your desired admin password
+    depends_on:
+      - source_postgres # Optional: If you want PGAdmin to connect to your source database
+      - destination_postgres # Optional: If you want PGAdmin to connect to your destination database
+    networks:
+      - elt_network
+
   elt_script:
     build:
       context: ./elt_script # Directory containing the Dockerfile and elt_script.py
       dockerfile: Dockerfile # Name of the Dockerfile, if it's something other than "Dockerfile", specify here
     command: ["python", "elt_script.py"]
-    networks:
-      - elt_network
+    container_name: elt_script_container
     environment:
       SOURCE_DB: "${SOURCE_DB}"
       SOURCE_USER: "${SOURCE_USER}"
@@ -44,6 +57,8 @@ services:
     depends_on:
       - source_postgres
       - destination_postgres
+    networks:
+      - elt_network
 
 networks:
   elt_network:

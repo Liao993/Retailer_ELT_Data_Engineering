@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv # type: ignore
 
+# Get Environment Variable
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path)
 
@@ -95,4 +96,3 @@ except subprocess.CalledProcessError as e:
 
 
 print("Ending ELT script...")
-
