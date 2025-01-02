@@ -1,15 +1,12 @@
-from dotenv import load_dotenv # type: ignore
-import os
-import time
 import subprocess
 import time
+from pathlib import Path
+import os
+from dotenv import load_dotenv # type: ignore
 
-
-# Load environment variables from .env file
-env_path = os.path.join('..', '.env') # Specify the path to the .env file
-load_dotenv(dotenv_path=env_path)
-
-
+# Get Environment Variable
+dotenv_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path)
 
 def wait_for_postgres(host, max_retries=5, delay_seconds=5):
     """Wait for PostgreSQL to become available."""
@@ -30,32 +27,36 @@ def wait_for_postgres(host, max_retries=5, delay_seconds=5):
     print("Max retries reached. Exiting.")
     return False
 
+
 # Use the function before running the ELT process
-source_host = os.getenv("SOURCE_HOST")
-if not wait_for_postgres(host=source_host):
+if not wait_for_postgres(host="source_postgres_container"):
     exit(1)
 
 print("Starting ELT script...")
 
-# Configuration for the source PostgreSQL database
 source_config = {
     "dbname": os.getenv("SOURCE_DB"),
     "user": os.getenv("SOURCE_USER"),
     "password": os.getenv("SOURCE_PASSWORD"),
-    "host": os.getenv("SOURCE_HOST"),
+    "host": "source_postgres_container",
 }
 
-# Configuration for the destination PostgreSQL database
 destination_config = {
     "dbname": os.getenv("DESTINATION_DB"),
     "user": os.getenv("DESTINATION_USER"),
     "password": os.getenv("DESTINATION_PASSWORD"),
-    "host": os.getenv("DESTINATION_HOST"),
-  
+    "host": "destination_postgres_container",
 }
 
-# Use pg_dump to extract(dump) the source database to a SQL file
-extract_command = [
+print(f"Source DB: {source_config['dbname']}")
+print(f"Destination DB: {destination_config['dbname']}")
+print(f"Source use: {source_config['user']}")
+print(f"Destination user: {destination_config['user']}")
+print(f"Source password: {source_config['password']}")
+print(f"Destination password: {destination_config['password']}")
+
+# Use pg_dump to dump the source database to a SQL file
+dump_command = [
     'pg_dump',
     '-h', source_config['host'],
     '-U', source_config['user'],
@@ -68,7 +69,11 @@ extract_command = [
 subprocess_env = dict(PGPASSWORD=source_config['password'])
 
 # Execute the dump command
-subprocess.run(extract_command, env=subprocess_env, check=True)
+try:
+    result = subprocess.run(dump_command, env=subprocess_env, check=True, capture_output=True, text=True)
+    print("pg_dump output:", result.stdout)
+except subprocess.CalledProcessError as e:
+    print("pg_dump error:", e.stderr)
 
 # Use psql to load the dumped SQL file into the destination database
 load_command = [
@@ -83,6 +88,11 @@ load_command = [
 subprocess_env = dict(PGPASSWORD=destination_config['password'])
 
 # Execute the load command
-subprocess.run(load_command, env=subprocess_env, check=True)
+try:
+    result = subprocess.run(load_command, env=subprocess_env, check=True, capture_output=True, text=True)
+    print("psql output:", result.stdout)
+except subprocess.CalledProcessError as e:
+    print("psql error:", e.stderr)
 
-print("Ending ELT script. Awesome!!!")
+
+print("Ending ELT script...")
