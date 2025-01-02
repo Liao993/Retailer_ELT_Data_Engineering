@@ -22,3 +22,6 @@ docker exec -it destination_postgres_container psql -U postgres ### postgres is 
 2. Activate that same virtual environment each time you create a shell window or session:
    source dbt-env/bin/activate # activate the environment for Mac and Linux OR
    dbt-env\Scripts\activate # activate the environment for Windows
+
+3. dbt init to build the dbt project
+   open ~/.dbt/profiles.yml to edit the database connection and schema setting
