@@ -73,6 +73,15 @@ services:
       DBT_PROFILE: "${DBT_PROFILE}"
       DBT_TARGET: "${DBT_TARGET}"
 
+  airflow_postgres:
+    image: postgres:latest
+    networks:
+      - elt_network
+    environment:
+      POSTGRES_DB: "${SOURCE_DB}"
+      POSTGRES_USER: "${SOURCE_USER}"
+      POSTGRES_PASSWORD: "${SOURCE_PASSWORD}"
+
 networks:
   elt_network:
     driver: bridge
