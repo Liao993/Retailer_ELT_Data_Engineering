@@ -61,26 +61,21 @@ services:
   dbt_server:
     image: ghcr.io/dbt-labs/dbt-postgres:1.4.7
     container_name: dbt_container
-    command: ["run", "--profiles-dir", "/root", "--project-dir", "/dbt"]
+    command:
+      ["run", "--profiles-dir", "/root", "--project-dir", "/dbt"]
+      # run: This tells dbt to execute all the models in your project.
+    #--profiles-dir /root: dbt will look for the profiles.yml file inside the /root directory (mapped to your local ~/.dbt directory).
+    #--project-dir /dbt: dbt will look for the dbt_project.yml and models inside the /dbt directory (mapped to your local ./custom_postgres_dbt directory).
     networks:
       - elt_network
     volumes:
-      - ./custom_postgres_dbt:/dbt
-      - ~/.dbt:/root
+      - ./custom_postgres_dbt:/dbt #Maps your dbt project folder (custom_postgres_dbt) to /dbt inside the container.
+      - ~/.dbt:/root #Maps your local .dbt folder (where profiles.yml is stored) to /root inside the container.
     depends_on:
       - elt_script
     environment:
       DBT_PROFILE: "${DBT_PROFILE}"
       DBT_TARGET: "${DBT_TARGET}"
-
-  airflow_postgres:
-    image: postgres:latest
-    networks:
-      - elt_network
-    environment:
-      POSTGRES_DB: "${SOURCE_DB}"
-      POSTGRES_USER: "${SOURCE_USER}"
-      POSTGRES_PASSWORD: "${SOURCE_PASSWORD}"
 
 networks:
   elt_network:
