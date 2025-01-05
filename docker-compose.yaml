@@ -59,7 +59,7 @@ services:
       - elt_network
 
   dbt_server:
-    image: ghcr.io/dbt-labs/dbt-postgres:1.4.7
+    image: ghcr.io/dbt-labs/dbt-postgres:latest
     container_name: dbt_container
     command: ["run", "--profiles-dir", "/root", "--project-dir", "/dbt"]
     networks:
@@ -108,7 +108,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./src:/opt/airflow/src
+      - ./elt_script:/opt/airflow/elt_script
       - ./custom_postgres_dbt:/opt/dbt
       - ~/.dbt:/root/.dbt
       - /var/run/docker.sock:/var/run/docker.sock
@@ -131,7 +131,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./src:/opt/airflow/src
+        - ./elt_script:/opt/airflow/elt_script
       - ./custom_postgres_dbt:/opt/dbt
       - ~/.dbt:/root/.dbt
       - /var/run/docker.sock:/var/run/docker.sock
